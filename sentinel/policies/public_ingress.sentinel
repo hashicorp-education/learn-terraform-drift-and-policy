@@ -1,0 +1,16 @@
+import "tfplan/v2" as tfplan
+
+forbidden_ingress_cidrs = ["0.0.0.0/0"]
+
+ingress_rules = filter tfplan.resource_changes as _, resource {
+	resource.type is "aws_vpc_security_group_ingress_rule" and
+		resource.change.actions is ["create"]
+}
+
+public_ingress = filter ingress_rules as _, ingress_rule {
+  ingress_rule.change.after.cidr_ipv4 is "0.0.0.0/0"
+}
+
+main = rule {
+  length(public_ingress) is 0
+}

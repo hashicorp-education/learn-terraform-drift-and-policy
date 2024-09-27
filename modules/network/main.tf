@@ -51,10 +51,22 @@ data "aws_ami" "amazon_linux" {
   }
 }
 
+data "aws_ec2_instance_type" "bastion" {
+  instance_type = var.bastion_instance_type
+}
+
 resource "aws_instance" "bastion" {
   instance_type = var.bastion_instance_type
   ami           = data.aws_ami.amazon_linux.id
 
   subnet_id              = module.vpc.public_subnets[0]
   vpc_security_group_ids = [aws_security_group.bastion.id]
+
+  lifecycle {
+    precondition {
+      condition     = data.aws_ec2_instance_type.bastion.default_cores <= 2
+      error_message = "Change the value of bastion_instance_type to a type that has 2 or fewer cores to avoid over provisioning."
+    }
+  }
 }
+
