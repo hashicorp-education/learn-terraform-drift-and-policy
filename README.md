@@ -560,10 +560,15 @@ tutorial, you will configure policy sets through VCS. The VCS workflow lets you
 collaborate on and safely develop and version your OPA policies, establishing
 the repository as the source of truth.
 
+Create your policy set.
+
+First, log in to [HCP Terraform](https://app.terraform.io/app), and select the
+organization you will use to complete this tutorial.
+
 Navigate to your organization's **Settings**, then to **Policy Sets**. Click
 **Connect a new policy set**. 
 
-Select your Github version control integration. 
+Select **Version control provider (VCS).
 
 <Tip>
 
@@ -573,10 +578,15 @@ Select your Github version control integration.
 
 </Tip>
 
-Select your fork of the `learn-terraform-drift-and-policy` repository. 
+On the **Configure settings** page:
+* Select either **Sentinel** or **Open Policy Agent** as the policy integration,
+  depending on which you are using for this tutorial.
+* Name your policy `Example network deployment policy`.
+* Set the scope of your policy set to **Policies enforced on selected projects
+  and workspaces**.
 
-On the **Settings** page:
-* Select either **Sentinel** or **OPA** as the policy integration.
+
+
 * Under **Policy set source**, expand the **More options** drop down.
 * Set the **Policies Path** to `sentinel` or `opa`.
 * Set the **Scope of Policies** to **Policies enforced on selected workspaces**
