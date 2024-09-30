@@ -2,8 +2,8 @@ import "time"
 
 param forbidden_days
 
-is_friday = rule { time.now.day in forbidden_days }
+is_forbidden_day = rule { time.now.day in forbidden_days }
 
 main = rule {
-    not is_friday
+    not is_forbidden_day
 }

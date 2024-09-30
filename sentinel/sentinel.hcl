@@ -2,7 +2,7 @@ policy "friday_deploys" {
   query = "data.terraform.policies.deployment_days.deny"
   enforcement_level = "advisory"
   params = {
-    "forbidden_days" = ["monday"]
+    "forbidden_days" = ["friday"]
   }
 }
 
