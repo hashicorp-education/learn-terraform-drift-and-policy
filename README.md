@@ -235,7 +235,7 @@ data "aws_ec2_instance_type" "bastion" {
 
 Now, add the precondition to the `aws_instance.bastion` resource definition. 
 
-<CodeBlockConfig hideClipboard filename="modules/network/main.tf" highlight="7-13">
+<CodeBlockConfig hideClipboard filename="modules/network/main.tf" highlight="8-14">
 
 ```hcl
 resource "aws_instance" "bastion" {
@@ -256,9 +256,11 @@ resource "aws_instance" "bastion" {
 
 </CodeBlockConfig>
 
-Terraform evaluates preconditions before provisioning the surrounding block. In
-this case, it will check whether the configuration satisfies the condition
-before provisioning the bastion instance.
+Terraform evaluates preconditions when it plans your changes. In this case,
+Terraform will load the `default_cores` value from the
+`aws_ec2_instance_type.bastion` data source. Then, it will check whether the
+configuration satisfies the condition before it will create the plan to
+provision the bastion instance and your other resources.
 
 ## Deploy infrastructure
 
@@ -940,17 +942,21 @@ In this tutorial, you used Terraform language features and HCP Terraform
 policies to make sure that your infrastructure matches your configuration, and
 complies with your organization’s needs and standards. Configuration-level
 validation such as preconditions let you specify standards within Terraform
-configurations. HCP Terraform policies let you enforce standards for an
-entire workspace or organization. You also used HCP Terraform health
-assessments to make sure that existing infrastructure still matched Terraform
-configuration, and had not changed outside of the Terraform workflow.
+configurations. HCP Terraform policies let you enforce standards for an entire
+workspace or organization. You also used HCP Terraform health assessments to
+make sure that existing infrastructure still matched Terraform configuration,
+and had not changed outside of the Terraform workflow.
 
 To learn more about how Terraform features can help you validate your
 infrastructure configuration, check out the following resources:
 
-- Review the [OPA and policy documentation](/terraform/cloud-docs/policy-enforcement/opa).
+- Review the [policy documentation](/terraform/cloud-docs/policy-enforcement/opa).
+
 - Learn how to [configure and use health assessments to detect infrastructure drift](/terraform/tutorials/cloud/drift-detection).
+
 - Learn how to manage [your infrastructure costs in HCP Terraform](/terraform/tutorials/policy/cost-estimation).
+
 - Learn how to use HCP Terraform run tasks and HCP Packer to [ensure machine image compliance](/terraform/tutorials/cloud/run-tasks-resource-image-validation).
+
 - Review the [health assessment documentation](/terraform/cloud-docs/workspaces/health).
 
