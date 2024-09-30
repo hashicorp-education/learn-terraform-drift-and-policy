@@ -296,15 +296,14 @@ $ export TF_CLOUD_ORGANIZATION=
 </Tip>
 
 Initialize your configuration. As part of initialization, Terraform creates your
-`learn-terraform-drift-and-opa` HCP Terraform workspace. 
+`learn-terraform-drift-and-policy` HCP Terraform workspace.
 
 ```shell-session
 $ terraform init
 ```
 
-Now, attempt to apply your configuration. The apply will fail because the
-instance size you specified is too big, and the precondition will return an
-error.
+Now, attempt to plan your configuration. The plan will fail because the instance
+size you specified is too big, and the precondition will return an error.
 
 <Note>
 
@@ -320,11 +319,47 @@ now.
 </Note>
 
 ```shell-session
-$ terraform apply
-#FIXME
+$ terraform plan
+Running plan in HCP Terraform. Output will stream here. Pressing Ctrl-C
+will stop streaming the logs, but will not stop the plan running remotely.
+
+Preparing the remote plan...
+
+To view this run in a browser, visit:
+https://app.terraform.io/app/your-org/learn-terraform-drift-and-policy/runs/run-uADaudsn745HtpAv
+
+Waiting for the plan to start...
+
+Terraform v1.8.3
+on linux_amd64
+Initializing plugins and modules...
+module.network.data.aws_ami.amazon_linux: Refreshing...
+module.network.data.aws_ec2_instance_type.bastion: Refreshing...
+module.network.data.aws_availability_zones.available: Refreshing...
+module.network.data.aws_ec2_instance_type.bastion: Refresh complete after 0s [id=t2.2xlarge]
+module.network.data.aws_availability_zones.available: Refresh complete after 0s [id=us-east-2]
+module.network.data.aws_ami.amazon_linux: Refresh complete after 0s [id=ami-02c4341ce4964ef28]
+╷
+│ Error: Resource precondition failed
+│
+│   on modules/network/main.tf line 67, in resource "aws_instance" "bastion":
+│   67:       condition     = data.aws_ec2_instance_type.bastion.default_cores <= 2
+│     ├────────────────
+│     │ data.aws_ec2_instance_type.bastion.default_cores is 8
+│
+│ Change the value of bastion_instance_type to a type that has 2 or fewer
+│ cores to avoid over provisioning.
+╵
+Operation failed: failed running terraform plan (exit 1)
+
+─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+Note: You didn't use the -out option to save this plan, so Terraform can't guarantee to take exactly these actions if you run "terraform apply" now.
 ```
 
-The `t2.2xlarge` instance type has 8 cores, so this Terraform run failed the precondition defined in the networking module. Overprovisioning the bastion would incur unnecessary cost for your organization.
+The `t2.2xlarge` instance type has 8 cores, so this Terraform run failed the
+precondition defined in the networking module. Overprovisioning the bastion
+would incur unnecessary cost for your organization.
 
 Change the `bastion_instance_type` variable in `terraform.auto.tfvars` to `t2.small`.
 
@@ -341,10 +376,66 @@ Apply your configuration again. Respond `yes` to the prompt to confirm the opera
 
 ```shell-session
 $ terraform apply
-#FIXME
+Running apply in HCP Terraform. Output will stream here. Pressing Ctrl-C
+will cancel the remote apply if it's still pending. If the apply started it
+will stop streaming the logs, but will not stop the apply running remotely.
+
+Preparing the remote apply...
+
+To view this run in a browser, visit:
+https://app.terraform.io/app/hashicorp-training/learn-terraform-drift-and-policy/runs/run-tCk6Da4HDNQdqQHT
+
+Waiting for the plan to start...
+
+Terraform v1.8.3
+on linux_amd64
+Initializing plugins and modules...
+module.network.data.aws_ami.amazon_linux: Refreshing...
+module.network.data.aws_availability_zones.available: Refreshing...
+module.network.data.aws_ec2_instance_type.bastion: Refreshing...
+module.network.data.aws_ec2_instance_type.bastion: Refresh complete after 0s [id=t2.small]
+module.network.data.aws_availability_zones.available: Refresh complete after 0s [id=us-east-2]
+module.network.data.aws_ami.amazon_linux: Refresh complete after 0s [id=ami-02c4341ce4964ef28]
+
+Terraform used the selected providers to generate the following execution plan. Resource actions are indicated with the following symbols:
+  + create
+
+Terraform will perform the following actions:
+
+  # module.network.aws_instance.bastion will be created
+  + resource "aws_instance" "bastion" {
+
+## ...
+
+Plan: 25 to add, 0 to change, 0 to destroy.
+
+Do you want to perform these actions in workspace "learn-terraform-drift-and-policy"?
+  Terraform will perform the actions described above.
+  Only 'yes' will be accepted to approve.
+
+  Enter a value: yes
+
+module.network.module.vpc.aws_vpc.this[0]: Creating...
+module.network.module.vpc.aws_vpc.this[0]: Still creating... [10s elapsed]
+module.network.module.vpc.aws_vpc.this[0]: Creation complete after 11s [id=vpc-0c8dcf0e5d6c4da5b]
+
+## ...
+
+module.network.module.vpc.aws_nat_gateway.this[1]: Creation complete after 1m34s [id=nat-0b1a2fb0d660bf641]
+module.network.module.vpc.aws_route.private_nat_gateway[1]: Creating...
+module.network.module.vpc.aws_route.private_nat_gateway[0]: Creating...
+module.network.module.vpc.aws_route.private_nat_gateway[0]: Creation complete after 1s [id=r-rtb-018b4e4a1e29501a41080289494]
+module.network.module.vpc.aws_route.private_nat_gateway[1]: Creation complete after 1s [id=r-rtb-0ab827442f9e9d12f1080289494]
+
+Apply complete! Resources: 25 added, 0 changed, 0 destroyed.
 ```
 
-Using a precondition to verify resource allocation lets you use the most up to date information from AWS to determine whether or not your configuration satisfies the requirement. While you could have also used variable validation to catch the violation, that would require researching all of the instance types and their capacities and listing all of the acceptable instance types in your configuration, making it less flexible. 
+Using a precondition to verify resource allocation lets you use the most up to
+date information from AWS to determine whether or not your configuration
+satisfies the requirement. While you could have also used variable validation to
+catch the violation, that would require researching all of the instance types
+and their capacities and listing all of the acceptable instance types in your
+configuration, making it less flexible.
 
 ## Review policy
 
@@ -592,7 +683,7 @@ main = rule {
 
 </Tabs>
 
-Stage your update to the `friday_deploys` policy.
+Stage your update to the `friday_deploys` policy and instance type precondition.
 
 ```shell-session
 $ git add .
@@ -630,7 +721,7 @@ organization you will use to complete this tutorial.
 Navigate to your organization's **Settings**, then to **Policy Sets**. Click
 **Connect a new policy set**. 
 
-Select **Version control provider (VCS).
+Select the **Version control provider (VCS)** option.
 
 <Tip>
 
@@ -641,19 +732,17 @@ Select **Version control provider (VCS).
 </Tip>
 
 On the **Configure settings** page:
+
 * Select either **Sentinel** or **Open Policy Agent** as the policy integration,
   depending on which you are using for this tutorial.
-* Name your policy `Example network deployment policy`.
-* Set the scope of your policy set to **Policies enforced on selected projects
-  and workspaces**.
-
-
-
+* Name your policy `learn-terraform-drift-and-policy`.
+* Set the scope of your policy set to **Policies enforced on selected projects and workspaces**.
 * Under **Policy set source**, expand the **More options** drop down.
 * Set the **Policies Path** to `sentinel` or `opa`.
 * Set the **Scope of Policies** to **Policies enforced on selected workspaces**
-* **Uncheck** the box to allow overrides of failures
-Under **Workspaces**, select your `learn-terraform-opa` workspace. Then, click **Add workspace**.
+* Under **Workspaces**, select your `learn-terraform-drift-and-policy` workspace. Then, click **Add workspace**.
+* Under **Overrides**, uncheck the box next to "This policy set can be overridden in the event of mandatory failures."
+* Click **Next**.
 
 <Tip>
 
@@ -661,7 +750,21 @@ You can pin a policy set to a specific runtime version using the **Runtime versi
 
 </Tip>
 
-Finally, click **Connect policy set**.
+On the **Connect to VCS** page:
+
+* Select your Github.com integration.
+* Select the `learn-terraform-drift-and-policy` repository you created for this tutorial.
+* Set the **Policies path** to either `/sentinel` or `/opa`, depending on which policy engine you are using for this tutorial.
+* Click **Next**.
+
+On the **Parameters** page:
+
+* Click the **+ Add parameter** button.
+* Set the **Key** to `forbidden_days` and the value to a list containing today, for example: `["monday"]`.
+* Click the **Save parameter** button.
+* Click the **Connect policy set** button to connect your policy set to HCP Terraform.
+
+HCP Terraform will print out a summary of your new policy set.
 
 ## Trigger policy violation
 
@@ -699,10 +802,10 @@ resource "aws_security_group" "bastion" {
 
 </CodeBlockConfig>
 
-Navigate back to the root repository directory. 
+Navigate back to the repository's root directory.
 
 ```shell-session
-$ cd ../..
+$ cd ..
 ```
 
 Run `terraform apply` to attempt to update the security group. 
@@ -747,7 +850,8 @@ HCP Terraform detected the policy failures: the security group allows public
 ingress, and deploys are blocked today. The CLI output and run details in HCP
 Terraform list which policies failed.
 
-Using policies in HCP Terraform, you prevented Terraform from creating resources that violate your infrastructure and organization standards.
+Using policies in HCP Terraform, you prevented Terraform from creating resources
+that violate your infrastructure and organization standards.
 
 Before moving on, fix your policy and configuration to allow a successful apply. 
 
@@ -757,17 +861,20 @@ First, update the `friday_deploys` policy to check for deployments on Fridays.
 <Tabs>
 
 <Tab heading="Sentinel" group="sentinel">
-<CodeBlockConfig hideClipboard highlight="4" filename="opa/policies/friday_deploys.sentinel">
+<CodeBlockConfig hideClipboard highlight="4" filename="sentinel/sentinel.hcl">
 
 ```sentinel
-import "time"
+policy "friday_deploys" {
+  query = "data.terraform.policies.deployment_days.deny"
+  enforcement_level = "advisory"
+  params = {
+    "forbidden_days" = ["friday"]
+  }
+}
 
-forbidden_days = ["friday"]
-
-is_friday = rule { time.now.day in forbidden_days }
-
-main = rule {
-    not is_friday
+policy "public_ingress" {
+  query = "data.terraform.policies.public_ingress.deny"
+  enforcement_level = "mandatory"
 }
 ```
 
@@ -775,7 +882,7 @@ main = rule {
 
 </Tab>
 
-<Tab heading="Sentinel" group="sentinel">
+<Tab heading="OPA" group="opa">
 
 </Tabs>
 
@@ -811,7 +918,7 @@ Then, push your change.
 $ git push
 ```
 
-Revert the change to your for the `aws_security_group.bastion` resource in `modules/network/main.tf` so that it reflects your actual infrastructure configuration. 
+Revert the change to your for the `aws_security_group.bastion` resource in `modules/network/main.tf` so that it reflects your actual infrastructure configuration.
 
 <CodeBlockConfig hideClipboard highlight="9" file="modules/network/main.tf">
 
@@ -870,7 +977,10 @@ OPA Policy Evaluation
 
 <Note>
 
-Drift detection is available in HCP Terraform **Plus** Edition. Skip to the [clean up step](#clean-up-infrastructure) if you do not have access, or refer to [HCP Terraform pricing](https://www.hashicorp.com/products/terraform/pricing) for details.
+Drift detection is available in HCP Terraform **Plus** Edition. Skip to the
+[clean up step](#clean-up-infrastructure) if you do not have access, or refer to
+[HCP Terraform pricing](https://www.hashicorp.com/products/terraform/pricing)
+for details.
 
 </Note>
 
@@ -891,42 +1001,64 @@ security group details, then click **Edit inbound rules**. Delete the
 `192.168.0.0/16` source CIDR and replace it with `0.0.0.0/0`. Then, click **Save
 rules**.
 
-You have now introduced infrastructure drift into your configuration by managing the security group resource outside of the Terraform workflow.
+You have now introduced infrastructure drift into your configuration by managing
+the security group resource outside of the Terraform workflow.
 
 ## Detect drift
 
-HCP Terraform’s automatic health assessments help make sure that existing resources match their Terraform configuration. To do so, HCP Terraform runs non-actionable, refresh-only plans in configured workspaces to compare the actual settings of your infrastructure against the resources tracked in your workspace’s state file. The assessments do not update your state or infrastructure configuration. 
+HCP Terraform’s automatic health assessments help make sure that existing
+resources match their Terraform configuration. To do so, HCP Terraform runs
+non-actionable, refresh-only plans in configured workspaces to compare the
+actual settings of your infrastructure against the resources tracked in your
+workspace’s state file. The assessments do not update your state or
+infrastructure configuration.
 
-Assessments include two types of checks, which you enable together. Drift detection determines whether resources have changed outside of the Terraform workflow. Health checks verify that any custom conditions you define in your configuration are still valid, for example checking if a certificate is still valid. You can enable assessments on specific workspaces, or across all workspaces in an organization. Assessments only run on workspaces where the last apply was successful. If the last apply failed, the workspace already needs operator attention. Make sure your last apply succeeded before moving on. 
+Assessments include two types of checks, which you enable together. Drift
+detection determines whether resources have changed outside of the Terraform
+workflow. Health checks verify that any custom conditions you define in your
+configuration are still valid, for example checking if a certificate is still
+valid. You can enable assessments on specific workspaces, or across all
+workspaces in an organization. Assessments only run on workspaces where the last
+apply was successful. If the last apply failed, the workspace already needs
+operator attention. Make sure your last apply succeeded before moving on.
 
-Navigate to your `learn-terraform-drift-and-opa` workspace in the HCP
+Navigate to your `learn-terraform-drift-and-policy` workspace in the HCP
 Terraform UI. Under the workspace's **Settings**, select **Health**.
 
 Select **Enable**, then click **Save settings**.
 
-![Enable health assessments on TFC workspace](/img/terraform/tfc_hashicorp-training_workspaces_learn-terraform-drift-opa_health_settings.png)
+Shortly after enabling health assessments, the first assessment runs on the
+workspace. After the first assessment, following assessments run once every 24
+hours.
 
-Shortly after enabling health assessments, the first assessment runs on the workspace. After the first assessment, following assessments run once every 24 hours.
+After a few minutes, Terraform will report failed assessments on the workspace
+overview page.
 
-After a few minutes, Terraform will report failed assessments on the workspace overview page. 
-
-![HCP Terraform drift detection](/img/terraform/tfc_hashicorp-training_workspaces_learn-terraform-drift_drift_detected.png)
-
-Click **View Details** to get more information. HCP Terraform detected the change to your ingress rule and reported what will happen on your next run if you do not update your configuration.
-
-![HCP Terraform drift detection](/img/terraform/tfc_hashicorp-training_workspaces_learn-terraform-drift_drift_detected_details.png)
+Click **View Details** to get more information. HCP Terraform detected the
+change to your ingress rule and reported what will happen on your next run if
+you do not update your configuration.
 
 <Note>
 
-Drift detection only reports on changes to the resource attributes defined in your configuration. To avoid accidental drift, explicitly set any attributes critical to your operations in your configuration, even if you rely on a provider's default value for that attribute.
+Drift detection only reports on changes to the resource attributes defined in
+your configuration. To avoid accidental drift, explicitly set any attributes
+critical to your operations in your configuration, even if you rely on a
+provider's default value for that attribute.
 
 </Note>
 
-The health assessments detected infrastructure drift. These checks ensure that your infrastructure configuration still matches the written configuration and satisfies any defined custom conditions, extending your validation coverage beyond just the time of provisioning. Fixing drift is a manual process, because you need to understand whether you want to keep the infrastructure changes made outside of Terraform, or overwrite them. In this case, you could run another Terraform apply to overwrite the security group update.
+The health assessments detected infrastructure drift. These checks ensure that
+your infrastructure configuration still matches the written configuration and
+satisfies any defined custom conditions, extending your validation coverage
+beyond just the time of provisioning. Fixing drift is a manual process, because
+you need to understand whether you want to keep the infrastructure changes made
+outside of Terraform, or overwrite them. In this case, you could run another
+Terraform apply to overwrite the security group update.
 
 ## Clean up infrastructure
 
-Destroy the resources you created as part of this tutorial to avoid incurring unnecessary costs. Respond `yes` to the prompt to confirm the operation.
+Destroy the resources you created as part of this tutorial to avoid incurring
+unnecessary costs. Respond `yes` to the prompt to confirm the operation.
 
 ```shell-session
 $ terraform destroy
