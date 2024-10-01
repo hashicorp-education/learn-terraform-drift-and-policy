@@ -1,7 +1,7 @@
 mock "time" {
   data = {
     now = {
-      weekday  = "friday"
+      weekday_name  = "friday"
     }
   }
 }
