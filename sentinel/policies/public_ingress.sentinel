@@ -1,16 +1,30 @@
 import "tfplan/v2" as tfplan
 
+# List of forbidden ingress CIDRs
 forbidden_ingress_cidrs = ["0.0.0.0/0"]
 
-ingress_rules = filter tfplan.resource_changes as _, resource {
-	resource.type is "aws_vpc_security_group_ingress_rule" and
-		resource.change.actions is ["create"]
+# Function to check if a CIDR is in the forbidden list
+is_forbidden_cidr = func(cidr) {
+    return cidr in forbidden_ingress_cidrs
 }
 
-public_ingress = filter ingress_rules as _, ingress_rule {
-  ingress_rule.change.after.cidr_ipv4 is "0.0.0.0/0"
+check_security_groups = func() {
+    violatingResources = filter tfplan.resource_changes as _, rc {
+        rc.type is "aws_security_group" and
+        rc.mode is "managed" and
+        (rc.change.actions contains "create" or rc.change.actions is ["update"]) and
+        rc.change.after.ingress is not null and
+        any rc.change.after.ingress as _, ingress {
+            ingress.cidr_blocks is not null and
+            any ingress.cidr_blocks as _, cidr {
+                is_forbidden_cidr(cidr)
+            }
+        }
+    }
+
+    return length(violatingResources) == 0
 }
 
 main = rule {
-  length(public_ingress) is 0
+    check_security_groups()
 }
