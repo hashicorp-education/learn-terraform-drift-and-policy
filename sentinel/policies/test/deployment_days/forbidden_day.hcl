@@ -1,13 +1,13 @@
 mock "time" {
   data = {
     now = {
-      weekday_name  = "friday"
+      weekday_name  = "Friday"
     }
   }
 }
 
 param "forbidden_days" {
-  value = ["friday"]
+  value = ["Friday"]
 }
 
 test {
