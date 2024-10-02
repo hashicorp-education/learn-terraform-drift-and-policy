@@ -1,9 +1,6 @@
 policy "friday_deploys" {
   source = "./policies/deployment_days.sentinel"
   enforcement_level = "advisory"
-  params = {
-    forbidden_days = ["Friday"]
-  }
 }
 
 policy "public_ingress" {
